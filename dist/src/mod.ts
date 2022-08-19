@@ -63,7 +63,7 @@ class CustomStamina implements IPostDBLoadMod
             stamina.WalkConsumption.x = 0;
             stamina.WalkConsumption.y = 0;
 
-            logger.info("CustomStamina: All leg and hand stamina settings have been set to unlimited.");
+            logger.info("CustomStamina: All breath, leg, and hand stamina settings have been set to unlimited.");
         }
         else if (this.config.adjustment_method === "percent")
         {
