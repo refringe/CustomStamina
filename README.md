@@ -1,4 +1,4 @@
-I'm a big fan of doing one thing and doing it well. With that, I give you the CustomStamina mod. It allows you to set unlimited breath, leg, and hand stamina, adjust all stamina values by a relative percentage, or manually set the values yourself.
+Allows you to set unlimited breath, leg, and hand stamina, adjust all stamina values by a relative percentage, or manually set the values yourself.
 
 To install:
 

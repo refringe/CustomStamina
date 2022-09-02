@@ -2,7 +2,7 @@
     "_comment": "Enables the use of the mod. [true/false]",
     "mod_enabled": true,
 
-    "": "Verbose logging. [true/false]",
+    "_comment": "Verbose logging. [true/false]",
     "debug": false,
 
     "_comment": "Selects the method to adjust stamina. ['unlimited'/'percent'/'fixed']",

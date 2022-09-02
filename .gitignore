@@ -1,4 +1,4 @@
-node_modules
-CustomStamina.zip
-src/mod.js
+/dist
+/node_modules
+/src/mod.js
 .DS_Store
