@@ -1,4 +1,4 @@
-This is a mod for Single Player Tarkov.
+This is a mod for Single Player Tarkov.  
 https://www.sp-tarkov.com
 
 Allows you to set unlimited breath, leg, and hand stamina, adjust all stamina values by a relative percentage, or manually set the values yourself.
