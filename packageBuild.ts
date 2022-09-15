@@ -31,15 +31,17 @@ const ignoreList = [
     "src/**/*.js",
     "types/",
     ".git/",
-    ".gitea/",
+    ".github/",
     ".eslintignore",
     ".eslintrc.json",
     ".gitignore",
     ".DS_Store",
+    ".nvmrc",
     "packageBuild.ts",
     "mod.code-workspace",
     "package-lock.json",
-    "tsconfig.json"
+    "tsconfig.json",
+    "CustomStamina.png"
 ];
 const exclude = glob.sync(`{${ignoreList.join(",")}}`, { realpath: true, dot: true });
 
