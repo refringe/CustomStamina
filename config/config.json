@@ -1,6 +1,6 @@
 {
     "_comment": "Enables the use of the mod. [true/false]",
-    "mod_enabled": true,
+    "mod_enabled": false,
 
     "_comment": "Verbose logging. [true/false]",
     "debug": false,
