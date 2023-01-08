@@ -1,6 +1,6 @@
 {
     "_comment": "Enables the use of the mod. [true/false]",
-    "mod_enabled": false,
+    "mod_enabled": true,
 
     "_comment": "Verbose logging. [true/false]",
     "debug": false,
@@ -13,7 +13,7 @@
     "_comment": "Only used if adjustment_method is set to 'percent'.",
     "_comment": "Example:  50% (increase) to 200 = 300",
     "_comment": "Example: -50% (decrease) to 200 = 100",
-    "percent_stamina": 15,
+    "percent_stamina": 25,
 
     "_comment": "Set the stamina values manually.",
     "_comment": "Only used if adjustment_method is set to 'fixed'.",
