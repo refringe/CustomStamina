@@ -1,27 +1,30 @@
-import { DependencyContainer } from "tsyringe";
+import { IPostDBLoadModAsync } from "@spt-aki/models/external/IPostDBLoadModAsync";
+import { LogBackgroundColor } from "@spt-aki/models/spt/logging/LogBackgroundColor";
+import { LogTextColor } from "@spt-aki/models/spt/logging/LogTextColor";
 import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import { DependencyContainer } from "tsyringe";
 
-class CustomStamina implements IPostDBLoadMod
+class CustomStamina implements IPostDBLoadModAsync
 {
-    private config = require("../config/config.json");
-
-    public postDBLoad(container: DependencyContainer): void 
+    public async postDBLoadAsync(container: DependencyContainer): Promise<void>
     {
+        // Get the configuration options.
+        const config = await import("../config/config.json");
+
         // Get the logger from the server container.
         const logger = container.resolve<ILogger>("WinstonLogger");
 
         // Check to see if the mod is enabled.
-        const enabled:boolean = this.config.mod_enabled;
+        const enabled:boolean = config.mod_enabled;
         if (!enabled)
         {
-            logger.info("CustomStamina is disabled in the config file. No changes to stamina will be made.");
+            logger.logWithColor("CustomStamina is disabled in the config file.", LogTextColor.RED, LogBackgroundColor.DEFAULT);
             return;
         }
 
         // Verbose logging?
-        const debug:boolean = this.config.debug;
+        const debug:boolean = config.debug;
 
         // Get database from server.
         const databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
@@ -29,7 +32,7 @@ class CustomStamina implements IPostDBLoadMod
         // Get in-memory stamina configuration data.
         const stamina = databaseServer.getTables().globals.config.Stamina;
         
-        if (this.config.adjustment_method === "unlimited")
+        if (config.adjustment_method === "unlimited")
         {
             stamina.AimConsumptionByPose.x = 0;
             stamina.AimConsumptionByPose.y = 0;
@@ -63,169 +66,168 @@ class CustomStamina implements IPostDBLoadMod
             stamina.WalkConsumption.x = 0;
             stamina.WalkConsumption.y = 0;
 
-            logger.info("CustomStamina: All breath, leg, and hand stamina settings have been set to unlimited.");
+            logger.logWithColor("CustomStamina: All breath, leg, and hand stamina settings have been set to unlimited.", LogTextColor.CYAN, LogBackgroundColor.DEFAULT);
         }
-        else if (this.config.adjustment_method === "percent")
+        else if (config.adjustment_method === "percent")
         {
-            stamina.AimConsumptionByPose.x = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.AimConsumptionByPose.x);
-            stamina.AimConsumptionByPose.y = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.AimConsumptionByPose.y);
-            stamina.AimConsumptionByPose.z = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.AimConsumptionByPose.z);
-            stamina.AimDrainRate = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.AimDrainRate);
-            stamina.AimRangeFinderDrainRate = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.AimRangeFinderDrainRate);
-            stamina.BaseHoldBreathConsumption = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.BaseHoldBreathConsumption);
-            stamina.BaseRestorationRate = this.calculateRelativePercentage(this.config.percent_stamina, stamina.BaseRestorationRate);
-            stamina.Capacity = this.calculateRelativePercentage(this.config.percent_stamina, stamina.Capacity);
-            stamina.CrouchConsumption.x = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.CrouchConsumption.x);
-            stamina.CrouchConsumption.y = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.CrouchConsumption.y);
-            stamina.GrenadeHighThrow = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.GrenadeHighThrow);
-            stamina.GrenadeLowThrow = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.GrenadeLowThrow);
-            stamina.HoldBreathStaminaMultiplier.x = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.HoldBreathStaminaMultiplier.x);
-            stamina.HoldBreathStaminaMultiplier.y = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.HoldBreathStaminaMultiplier.y);
-            stamina.HandsCapacity = this.calculateRelativePercentage(this.config.percent_stamina, stamina.HandsCapacity);
-            stamina.HandsRestoration = this.calculateRelativePercentage(this.config.percent_stamina, stamina.HandsRestoration);
-            stamina.JumpConsumption = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.JumpConsumption);
-            stamina.OxygenCapacity = this.calculateRelativePercentage(this.config.percent_stamina, stamina.OxygenCapacity);
-            stamina.OxygenRestoration = this.calculateRelativePercentage(this.config.percent_stamina, stamina.OxygenRestoration);
-            stamina.PoseLevelConsumptionPerNotch.x = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.PoseLevelConsumptionPerNotch.x);
-            stamina.PoseLevelConsumptionPerNotch.y = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.PoseLevelConsumptionPerNotch.y);
-            stamina.ProneConsumption = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.ProneConsumption);
-            stamina.SitToStandConsumption = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.SitToStandConsumption);
-            stamina.SprintDrainRate = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.SprintDrainRate);
-            stamina.StandupConsumption.x = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.StandupConsumption.x);
-            stamina.StandupConsumption.y = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.StandupConsumption.y);
-            stamina.WalkConsumption.x = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.WalkConsumption.x);
-            stamina.WalkConsumption.y = this.calculateRelativePercentage(-(this.config.percent_stamina), stamina.WalkConsumption.y);
+            stamina.AimConsumptionByPose.x = this.calculateRelativePercentage(-(config.percent_stamina), stamina.AimConsumptionByPose.x);
+            stamina.AimConsumptionByPose.y = this.calculateRelativePercentage(-(config.percent_stamina), stamina.AimConsumptionByPose.y);
+            stamina.AimConsumptionByPose.z = this.calculateRelativePercentage(-(config.percent_stamina), stamina.AimConsumptionByPose.z);
+            stamina.AimDrainRate = this.calculateRelativePercentage(-(config.percent_stamina), stamina.AimDrainRate);
+            stamina.AimRangeFinderDrainRate = this.calculateRelativePercentage(-(config.percent_stamina), stamina.AimRangeFinderDrainRate);
+            stamina.BaseHoldBreathConsumption = this.calculateRelativePercentage(-(config.percent_stamina), stamina.BaseHoldBreathConsumption);
+            stamina.BaseRestorationRate = this.calculateRelativePercentage(config.percent_stamina, stamina.BaseRestorationRate);
+            stamina.Capacity = this.calculateRelativePercentage(config.percent_stamina, stamina.Capacity);
+            stamina.CrouchConsumption.x = this.calculateRelativePercentage(-(config.percent_stamina), stamina.CrouchConsumption.x);
+            stamina.CrouchConsumption.y = this.calculateRelativePercentage(-(config.percent_stamina), stamina.CrouchConsumption.y);
+            stamina.GrenadeHighThrow = this.calculateRelativePercentage(-(config.percent_stamina), stamina.GrenadeHighThrow);
+            stamina.GrenadeLowThrow = this.calculateRelativePercentage(-(config.percent_stamina), stamina.GrenadeLowThrow);
+            stamina.HoldBreathStaminaMultiplier.x = this.calculateRelativePercentage(-(config.percent_stamina), stamina.HoldBreathStaminaMultiplier.x);
+            stamina.HoldBreathStaminaMultiplier.y = this.calculateRelativePercentage(-(config.percent_stamina), stamina.HoldBreathStaminaMultiplier.y);
+            stamina.HandsCapacity = this.calculateRelativePercentage(config.percent_stamina, stamina.HandsCapacity);
+            stamina.HandsRestoration = this.calculateRelativePercentage(config.percent_stamina, stamina.HandsRestoration);
+            stamina.JumpConsumption = this.calculateRelativePercentage(-(config.percent_stamina), stamina.JumpConsumption);
+            stamina.OxygenCapacity = this.calculateRelativePercentage(config.percent_stamina, stamina.OxygenCapacity);
+            stamina.OxygenRestoration = this.calculateRelativePercentage(config.percent_stamina, stamina.OxygenRestoration);
+            stamina.PoseLevelConsumptionPerNotch.x = this.calculateRelativePercentage(-(config.percent_stamina), stamina.PoseLevelConsumptionPerNotch.x);
+            stamina.PoseLevelConsumptionPerNotch.y = this.calculateRelativePercentage(-(config.percent_stamina), stamina.PoseLevelConsumptionPerNotch.y);
+            stamina.ProneConsumption = this.calculateRelativePercentage(-(config.percent_stamina), stamina.ProneConsumption);
+            stamina.SitToStandConsumption = this.calculateRelativePercentage(-(config.percent_stamina), stamina.SitToStandConsumption);
+            stamina.SprintDrainRate = this.calculateRelativePercentage(-(config.percent_stamina), stamina.SprintDrainRate);
+            stamina.StandupConsumption.x = this.calculateRelativePercentage(-(config.percent_stamina), stamina.StandupConsumption.x);
+            stamina.StandupConsumption.y = this.calculateRelativePercentage(-(config.percent_stamina), stamina.StandupConsumption.y);
+            stamina.WalkConsumption.x = this.calculateRelativePercentage(-(config.percent_stamina), stamina.WalkConsumption.x);
+            stamina.WalkConsumption.y = this.calculateRelativePercentage(-(config.percent_stamina), stamina.WalkConsumption.y);
 
-            logger.info(`CustomStamina: All leg and hand stamina settings have been adjusted by ${(this.config.percent_stamina > 0 ? "+" : "")}${this.config.percent_stamina}%.`);
+            logger.logWithColor(`CustomStamina: All breath, leg, and hand stamina settings have been adjusted by ${(config.percent_stamina > 0 ? "+" : "")}${config.percent_stamina}%.`, LogTextColor.CYAN, LogBackgroundColor.DEFAULT);
         }
-        else if (this.config.adjustment_method === "fixed")
+        else if (config.adjustment_method === "fixed")
         {
-            if (debug && stamina.AimConsumptionByPose.x !== this.config.AimConsumptionByPose.x)
-                logger.info(`CustomStamina: Value for 'AimConsumptionByPose.x' has been been adjusted from ${stamina.AimConsumptionByPose.x} to ${this.config.AimConsumptionByPose.x}.`);
-            stamina.AimConsumptionByPose.x = this.config.AimConsumptionByPose.x;
+            if (debug && stamina.AimConsumptionByPose.x !== config.AimConsumptionByPose.x)
+                logger.debug(`CustomStamina: Value for 'AimConsumptionByPose.x' has been been adjusted from ${stamina.AimConsumptionByPose.x} to ${config.AimConsumptionByPose.x}.`);
+            stamina.AimConsumptionByPose.x = config.AimConsumptionByPose.x;
 
-            if (debug && stamina.AimConsumptionByPose.y !== this.config.AimConsumptionByPose.y)
-                logger.info(`CustomStamina: Value for 'AimConsumptionByPose.y' has been been adjusted from ${stamina.AimConsumptionByPose.y} to ${this.config.AimConsumptionByPose.y}.`);
-            stamina.AimConsumptionByPose.y = this.config.AimConsumptionByPose.y;
+            if (debug && stamina.AimConsumptionByPose.y !== config.AimConsumptionByPose.y)
+                logger.debug(`CustomStamina: Value for 'AimConsumptionByPose.y' has been been adjusted from ${stamina.AimConsumptionByPose.y} to ${config.AimConsumptionByPose.y}.`);
+            stamina.AimConsumptionByPose.y = config.AimConsumptionByPose.y;
 
-            if (debug && stamina.AimConsumptionByPose.z !== this.config.AimConsumptionByPose.z)
-                logger.info(`CustomStamina: Value for 'AimConsumptionByPose.z' has been been adjusted from ${stamina.AimConsumptionByPose.z} to ${this.config.AimConsumptionByPose.z}.`);
-            stamina.AimConsumptionByPose.z = this.config.AimConsumptionByPose.z;
+            if (debug && stamina.AimConsumptionByPose.z !== config.AimConsumptionByPose.z)
+                logger.debug(`CustomStamina: Value for 'AimConsumptionByPose.z' has been been adjusted from ${stamina.AimConsumptionByPose.z} to ${config.AimConsumptionByPose.z}.`);
+            stamina.AimConsumptionByPose.z = config.AimConsumptionByPose.z;
 
-            if (debug && stamina.AimDrainRate !== this.config.AimDrainRate)
-                logger.info(`CustomStamina: Value for 'AimDrainRate' has been been adjusted from ${stamina.AimDrainRate} to ${this.config.AimDrainRate}.`);
-            stamina.AimDrainRate = this.config.AimDrainRate;
+            if (debug && stamina.AimDrainRate !== config.AimDrainRate)
+                logger.debug(`CustomStamina: Value for 'AimDrainRate' has been been adjusted from ${stamina.AimDrainRate} to ${config.AimDrainRate}.`);
+            stamina.AimDrainRate = config.AimDrainRate;
 
-            if (debug && stamina.AimRangeFinderDrainRate !== this.config.AimRangeFinderDrainRate)
-                logger.info(`CustomStamina: Value for 'AimRangeFinderDrainRate' has been been adjusted from ${stamina.AimRangeFinderDrainRate} to ${this.config.AimRangeFinderDrainRate}.`);
-            stamina.AimRangeFinderDrainRate = this.config.AimRangeFinderDrainRate;
+            if (debug && stamina.AimRangeFinderDrainRate !== config.AimRangeFinderDrainRate)
+                logger.debug(`CustomStamina: Value for 'AimRangeFinderDrainRate' has been been adjusted from ${stamina.AimRangeFinderDrainRate} to ${config.AimRangeFinderDrainRate}.`);
+            stamina.AimRangeFinderDrainRate = config.AimRangeFinderDrainRate;
             
-            if (debug && stamina.BaseHoldBreathConsumption !== this.config.BaseHoldBreathConsumption)
-                logger.info(`CustomStamina: Value for 'BaseHoldBreathConsumption' has been been adjusted from ${stamina.BaseHoldBreathConsumption} to ${this.config.BaseHoldBreathConsumption}.`);
-            stamina.BaseHoldBreathConsumption = this.config.BaseHoldBreathConsumption;
+            if (debug && stamina.BaseHoldBreathConsumption !== config.BaseHoldBreathConsumption)
+                logger.debug(`CustomStamina: Value for 'BaseHoldBreathConsumption' has been been adjusted from ${stamina.BaseHoldBreathConsumption} to ${config.BaseHoldBreathConsumption}.`);
+            stamina.BaseHoldBreathConsumption = config.BaseHoldBreathConsumption;
             
-            if (debug && stamina.BaseRestorationRate !== this.config.BaseRestorationRate)
-                logger.info(`CustomStamina: Value for 'BaseRestorationRate' has been been adjusted from ${stamina.BaseRestorationRate} to ${this.config.BaseRestorationRate}.`);
-            stamina.BaseRestorationRate = this.config.BaseRestorationRate;
+            if (debug && stamina.BaseRestorationRate !== config.BaseRestorationRate)
+                logger.debug(`CustomStamina: Value for 'BaseRestorationRate' has been been adjusted from ${stamina.BaseRestorationRate} to ${config.BaseRestorationRate}.`);
+            stamina.BaseRestorationRate = config.BaseRestorationRate;
 
-            if (debug && stamina.Capacity !== this.config.Capacity)
-                logger.info(`CustomStamina: Value for 'Capacity' has been been adjusted from ${stamina.Capacity} to ${this.config.Capacity}.`);
-            stamina.Capacity = this.config.Capacity;
+            if (debug && stamina.Capacity !== config.Capacity)
+                logger.debug(`CustomStamina: Value for 'Capacity' has been been adjusted from ${stamina.Capacity} to ${config.Capacity}.`);
+            stamina.Capacity = config.Capacity;
 
-            if (debug && stamina.CrouchConsumption.x !== this.config.CrouchConsumption.x)
-                logger.info(`CustomStamina: Value for 'CrouchConsumption.x' has been been adjusted from ${stamina.CrouchConsumption.x} to ${this.config.CrouchConsumption.x}.`);
-            stamina.CrouchConsumption.x = this.config.CrouchConsumption.x;
+            if (debug && stamina.CrouchConsumption.x !== config.CrouchConsumption.x)
+                logger.debug(`CustomStamina: Value for 'CrouchConsumption.x' has been been adjusted from ${stamina.CrouchConsumption.x} to ${config.CrouchConsumption.x}.`);
+            stamina.CrouchConsumption.x = config.CrouchConsumption.x;
 
-            if (debug && stamina.CrouchConsumption.y !== this.config.CrouchConsumption.y)
-                logger.info(`CustomStamina: Value for 'CrouchConsumption.y' has been been adjusted from ${stamina.CrouchConsumption.y} to ${this.config.CrouchConsumption.y}.`);
-            stamina.CrouchConsumption.y = this.config.CrouchConsumption.y;
+            if (debug && stamina.CrouchConsumption.y !== config.CrouchConsumption.y)
+                logger.debug(`CustomStamina: Value for 'CrouchConsumption.y' has been been adjusted from ${stamina.CrouchConsumption.y} to ${config.CrouchConsumption.y}.`);
+            stamina.CrouchConsumption.y = config.CrouchConsumption.y;
 
-            if (debug && stamina.GrenadeHighThrow !== this.config.GrenadeHighThrow)
-                logger.info(`CustomStamina: Value for 'GrenadeHighThrow' has been been adjusted from ${stamina.GrenadeHighThrow} to ${this.config.GrenadeHighThrow}.`);
-            stamina.GrenadeHighThrow = this.config.GrenadeHighThrow;
+            if (debug && stamina.GrenadeHighThrow !== config.GrenadeHighThrow)
+                logger.debug(`CustomStamina: Value for 'GrenadeHighThrow' has been been adjusted from ${stamina.GrenadeHighThrow} to ${config.GrenadeHighThrow}.`);
+            stamina.GrenadeHighThrow = config.GrenadeHighThrow;
 
-            if (debug && stamina.GrenadeLowThrow !== this.config.GrenadeLowThrow)
-                logger.info(`CustomStamina: Value for 'GrenadeLowThrow' has been been adjusted from ${stamina.GrenadeLowThrow} to ${this.config.GrenadeLowThrow}.`);
-            stamina.GrenadeLowThrow = this.config.GrenadeLowThrow;
+            if (debug && stamina.GrenadeLowThrow !== config.GrenadeLowThrow)
+                logger.debug(`CustomStamina: Value for 'GrenadeLowThrow' has been been adjusted from ${stamina.GrenadeLowThrow} to ${config.GrenadeLowThrow}.`);
+            stamina.GrenadeLowThrow = config.GrenadeLowThrow;
 
-            if (debug && stamina.HoldBreathStaminaMultiplier.x !== this.config.HoldBreathStaminaMultiplier.x)
-                logger.info(`CustomStamina: Value for 'HoldBreathStaminaMultiplier.x' has been been adjusted from ${stamina.HoldBreathStaminaMultiplier.x} to ${this.config.HoldBreathStaminaMultiplier.x}.`);
-            stamina.HoldBreathStaminaMultiplier.x = this.config.HoldBreathStaminaMultiplier.x;
+            if (debug && stamina.HoldBreathStaminaMultiplier.x !== config.HoldBreathStaminaMultiplier.x)
+                logger.debug(`CustomStamina: Value for 'HoldBreathStaminaMultiplier.x' has been been adjusted from ${stamina.HoldBreathStaminaMultiplier.x} to ${config.HoldBreathStaminaMultiplier.x}.`);
+            stamina.HoldBreathStaminaMultiplier.x = config.HoldBreathStaminaMultiplier.x;
 
-            if (debug && stamina.HoldBreathStaminaMultiplier.y !== this.config.HoldBreathStaminaMultiplier.y)
-                logger.info(`CustomStamina: Value for 'HoldBreathStaminaMultiplier.y' has been been adjusted from ${stamina.HoldBreathStaminaMultiplier.y} to ${this.config.HoldBreathStaminaMultiplier.y}.`);
-            stamina.HoldBreathStaminaMultiplier.y = this.config.HoldBreathStaminaMultiplier.y;
+            if (debug && stamina.HoldBreathStaminaMultiplier.y !== config.HoldBreathStaminaMultiplier.y)
+                logger.debug(`CustomStamina: Value for 'HoldBreathStaminaMultiplier.y' has been been adjusted from ${stamina.HoldBreathStaminaMultiplier.y} to ${config.HoldBreathStaminaMultiplier.y}.`);
+            stamina.HoldBreathStaminaMultiplier.y = config.HoldBreathStaminaMultiplier.y;
 
-            if (debug && stamina.HandsCapacity !== this.config.HandsCapacity)
-                logger.info(`CustomStamina: Value for 'HandsCapacity' has been been adjusted from ${stamina.HandsCapacity} to ${this.config.HandsCapacity}.`);
-            stamina.HandsCapacity = this.config.HandsCapacity;
+            if (debug && stamina.HandsCapacity !== config.HandsCapacity)
+                logger.debug(`CustomStamina: Value for 'HandsCapacity' has been been adjusted from ${stamina.HandsCapacity} to ${config.HandsCapacity}.`);
+            stamina.HandsCapacity = config.HandsCapacity;
 
-            if (debug && stamina.HandsRestoration !== this.config.HandsRestoration)
-                logger.info(`CustomStamina: Value for 'HandsRestoration' has been been adjusted from ${stamina.HandsRestoration} to ${this.config.HandsRestoration}.`);
-            stamina.HandsRestoration = this.config.HandsRestoration;
+            if (debug && stamina.HandsRestoration !== config.HandsRestoration)
+                logger.debug(`CustomStamina: Value for 'HandsRestoration' has been been adjusted from ${stamina.HandsRestoration} to ${config.HandsRestoration}.`);
+            stamina.HandsRestoration = config.HandsRestoration;
 
-            if (debug && stamina.JumpConsumption !== this.config.JumpConsumption)
-                logger.info(`CustomStamina: Value for 'JumpConsumption' has been been adjusted from ${stamina.JumpConsumption} to ${this.config.JumpConsumption}.`);
-            stamina.JumpConsumption = this.config.JumpConsumption;
+            if (debug && stamina.JumpConsumption !== config.JumpConsumption)
+                logger.debug(`CustomStamina: Value for 'JumpConsumption' has been been adjusted from ${stamina.JumpConsumption} to ${config.JumpConsumption}.`);
+            stamina.JumpConsumption = config.JumpConsumption;
 
-            if (debug && stamina.OxygenCapacity !== this.config.OxygenCapacity)
-                logger.info(`CustomStamina: Value for 'OxygenCapacity' has been been adjusted from ${stamina.OxygenCapacity} to ${this.config.OxygenCapacity}.`);
-            stamina.OxygenCapacity = this.config.OxygenCapacity;
+            if (debug && stamina.OxygenCapacity !== config.OxygenCapacity)
+                logger.debug(`CustomStamina: Value for 'OxygenCapacity' has been been adjusted from ${stamina.OxygenCapacity} to ${config.OxygenCapacity}.`);
+            stamina.OxygenCapacity = config.OxygenCapacity;
 
-            if (debug && stamina.OxygenRestoration !== this.config.OxygenRestoration)
-                logger.info(`CustomStamina: Value for 'OxygenRestoration' has been been adjusted from ${stamina.OxygenRestoration} to ${this.config.OxygenRestoration}.`);
-            stamina.OxygenRestoration = this.config.OxygenRestoration;
+            if (debug && stamina.OxygenRestoration !== config.OxygenRestoration)
+                logger.debug(`CustomStamina: Value for 'OxygenRestoration' has been been adjusted from ${stamina.OxygenRestoration} to ${config.OxygenRestoration}.`);
+            stamina.OxygenRestoration = config.OxygenRestoration;
 
-            if (debug && stamina.PoseLevelConsumptionPerNotch.x !== this.config.PoseLevelConsumptionPerNotch.x)
-                logger.info(`CustomStamina: Value for 'PoseLevelConsumptionPerNotch.x' has been been adjusted from ${stamina.PoseLevelConsumptionPerNotch.x} to ${this.config.PoseLevelConsumptionPerNotch.x}.`);
-            stamina.PoseLevelConsumptionPerNotch.x = this.config.PoseLevelConsumptionPerNotch.x;
+            if (debug && stamina.PoseLevelConsumptionPerNotch.x !== config.PoseLevelConsumptionPerNotch.x)
+                logger.debug(`CustomStamina: Value for 'PoseLevelConsumptionPerNotch.x' has been been adjusted from ${stamina.PoseLevelConsumptionPerNotch.x} to ${config.PoseLevelConsumptionPerNotch.x}.`);
+            stamina.PoseLevelConsumptionPerNotch.x = config.PoseLevelConsumptionPerNotch.x;
 
-            if (debug && stamina.PoseLevelConsumptionPerNotch.y !== this.config.PoseLevelConsumptionPerNotch.y)
-                logger.info(`CustomStamina: Value for 'PoseLevelConsumptionPerNotch.y' has been been adjusted from ${stamina.PoseLevelConsumptionPerNotch.y} to ${this.config.PoseLevelConsumptionPerNotch.y}.`);
-            stamina.PoseLevelConsumptionPerNotch.y = this.config.PoseLevelConsumptionPerNotch.y;
+            if (debug && stamina.PoseLevelConsumptionPerNotch.y !== config.PoseLevelConsumptionPerNotch.y)
+                logger.debug(`CustomStamina: Value for 'PoseLevelConsumptionPerNotch.y' has been been adjusted from ${stamina.PoseLevelConsumptionPerNotch.y} to ${config.PoseLevelConsumptionPerNotch.y}.`);
+            stamina.PoseLevelConsumptionPerNotch.y = config.PoseLevelConsumptionPerNotch.y;
 
-            if (debug && stamina.ProneConsumption !== this.config.ProneConsumption)
-                logger.info(`CustomStamina: Value for 'ProneConsumption' has been been adjusted from ${stamina.ProneConsumption} to ${this.config.ProneConsumption}.`);
-            stamina.ProneConsumption = this.config.ProneConsumption;
+            if (debug && stamina.ProneConsumption !== config.ProneConsumption)
+                logger.debug(`CustomStamina: Value for 'ProneConsumption' has been been adjusted from ${stamina.ProneConsumption} to ${config.ProneConsumption}.`);
+            stamina.ProneConsumption = config.ProneConsumption;
 
-            if (debug && stamina.SitToStandConsumption !== this.config.SitToStandConsumption)
-                logger.info(`CustomStamina: Value for 'SitToStandConsumption' has been been adjusted from ${stamina.SitToStandConsumption} to ${this.config.SitToStandConsumption}.`);
-            stamina.SitToStandConsumption = this.config.SitToStandConsumption;
+            if (debug && stamina.SitToStandConsumption !== config.SitToStandConsumption)
+                logger.debug(`CustomStamina: Value for 'SitToStandConsumption' has been been adjusted from ${stamina.SitToStandConsumption} to ${config.SitToStandConsumption}.`);
+            stamina.SitToStandConsumption = config.SitToStandConsumption;
 
-            if (debug && stamina.SprintDrainRate !== this.config.SprintDrainRate)
-                logger.info(`CustomStamina: Value for 'SprintDrainRate' has been been adjusted from ${stamina.SprintDrainRate} to ${this.config.SprintDrainRate}.`);
-            stamina.SprintDrainRate = this.config.SprintDrainRate;
+            if (debug && stamina.SprintDrainRate !== config.SprintDrainRate)
+                logger.debug(`CustomStamina: Value for 'SprintDrainRate' has been been adjusted from ${stamina.SprintDrainRate} to ${config.SprintDrainRate}.`);
+            stamina.SprintDrainRate = config.SprintDrainRate;
 
-            if (debug && stamina.StaminaExhaustionCausesJiggle !== this.config.StaminaExhaustionCausesJiggle)
-                logger.info(`CustomStamina: Value for 'StaminaExhaustionCausesJiggle' has been been adjusted from ${stamina.StaminaExhaustionCausesJiggle} to ${this.config.StaminaExhaustionCausesJiggle}.`);
-            stamina.StaminaExhaustionCausesJiggle = this.config.StaminaExhaustionCausesJiggle;
+            if (debug && stamina.StaminaExhaustionCausesJiggle !== config.StaminaExhaustionCausesJiggle)
+                logger.debug(`CustomStamina: Value for 'StaminaExhaustionCausesJiggle' has been been adjusted from ${stamina.StaminaExhaustionCausesJiggle} to ${config.StaminaExhaustionCausesJiggle}.`);
+            stamina.StaminaExhaustionCausesJiggle = config.StaminaExhaustionCausesJiggle;
 
-            if (debug && stamina.StaminaExhaustionRocksCamera !== this.config.StaminaExhaustionRocksCamera)
-                logger.info(`CustomStamina: Value for 'StaminaExhaustionRocksCamera' has been been adjusted from ${stamina.StaminaExhaustionRocksCamera} to ${this.config.StaminaExhaustionRocksCamera}.`);
-            stamina.StaminaExhaustionRocksCamera = this.config.StaminaExhaustionRocksCamera;
+            if (debug && stamina.StaminaExhaustionRocksCamera !== config.StaminaExhaustionRocksCamera)
+                logger.debug(`CustomStamina: Value for 'StaminaExhaustionRocksCamera' has been been adjusted from ${stamina.StaminaExhaustionRocksCamera} to ${config.StaminaExhaustionRocksCamera}.`);
+            stamina.StaminaExhaustionRocksCamera = config.StaminaExhaustionRocksCamera;
 
-            if (debug && stamina.StaminaExhaustionStartsBreathSound !== this.config.StaminaExhaustionStartsBreathSound)
-                logger.info(`CustomStamina: Value for 'StaminaExhaustionStartsBreathSound' has been been adjusted from ${stamina.StaminaExhaustionStartsBreathSound} to ${this.config.StaminaExhaustionStartsBreathSound}.`);
-            stamina.StaminaExhaustionStartsBreathSound = this.config.StaminaExhaustionStartsBreathSound;
+            if (debug && stamina.StaminaExhaustionStartsBreathSound !== config.StaminaExhaustionStartsBreathSound)
+                logger.debug(`CustomStamina: Value for 'StaminaExhaustionStartsBreathSound' has been been adjusted from ${stamina.StaminaExhaustionStartsBreathSound} to ${config.StaminaExhaustionStartsBreathSound}.`);
+            stamina.StaminaExhaustionStartsBreathSound = config.StaminaExhaustionStartsBreathSound;
 
-            if (debug && stamina.StandupConsumption.x !== this.config.StandupConsumption.x)
-                logger.info(`CustomStamina: Value for 'StandupConsumption.x' has been been adjusted from ${stamina.StandupConsumption.x} to ${this.config.StandupConsumption.x}.`);
-            stamina.StandupConsumption.x = this.config.StandupConsumption.x;
+            if (debug && stamina.StandupConsumption.x !== config.StandupConsumption.x)
+                logger.debug(`CustomStamina: Value for 'StandupConsumption.x' has been been adjusted from ${stamina.StandupConsumption.x} to ${config.StandupConsumption.x}.`);
+            stamina.StandupConsumption.x = config.StandupConsumption.x;
 
-            if (debug && stamina.StandupConsumption.y !== this.config.StandupConsumption.y)
-                logger.info(`CustomStamina: Value for 'StandupConsumption.y' has been been adjusted from ${stamina.StandupConsumption.y} to ${this.config.StandupConsumption.y}.`);
-            stamina.StandupConsumption.y = this.config.StandupConsumption.y;
+            if (debug && stamina.StandupConsumption.y !== config.StandupConsumption.y)
+                logger.debug(`CustomStamina: Value for 'StandupConsumption.y' has been been adjusted from ${stamina.StandupConsumption.y} to ${config.StandupConsumption.y}.`);
+            stamina.StandupConsumption.y = config.StandupConsumption.y;
 
-            if (debug && stamina.WalkConsumption.x !== this.config.WalkConsumption.x)
-                logger.info(`CustomStamina: Value for 'WalkConsumption.x' has been been adjusted from ${stamina.WalkConsumption.x} to ${this.config.WalkConsumption.x}.`);
-            stamina.WalkConsumption.x = this.config.WalkConsumption.x;
+            if (debug && stamina.WalkConsumption.x !== config.WalkConsumption.x)
+                logger.debug(`CustomStamina: Value for 'WalkConsumption.x' has been been adjusted from ${stamina.WalkConsumption.x} to ${config.WalkConsumption.x}.`);
+            stamina.WalkConsumption.x = config.WalkConsumption.x;
 
-            if (debug && stamina.WalkConsumption.y !== this.config.WalkConsumption.y)
-                logger.info(`CustomStamina: Value for 'WalkConsumption.y' has been been adjusted from ${stamina.WalkConsumption.y} to ${this.config.WalkConsumption.y}.`);
-            stamina.WalkConsumption.y = this.config.WalkConsumption.y;
+            if (debug && stamina.WalkConsumption.y !== config.WalkConsumption.y)
+                logger.debug(`CustomStamina: Value for 'WalkConsumption.y' has been been adjusted from ${stamina.WalkConsumption.y} to ${config.WalkConsumption.y}.`);
+            stamina.WalkConsumption.y = config.WalkConsumption.y;
 
-            if (!debug)
-                logger.info("CustomStamina: Leg and hand stamina has been manually adjusted.");
+            logger.logWithColor("CustomStamina: Breath, leg, and hand stamina has been manually adjusted.", LogTextColor.CYAN, LogBackgroundColor.DEFAULT);
         }
     }
 

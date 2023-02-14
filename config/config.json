@@ -22,14 +22,14 @@
         "y": 0.75,
         "z": 1
     },
-    "AimDrainRate": 1.1,
+    "AimDrainRate": 1.0,
     "AimRangeFinderDrainRate": 0.55,
     "BaseHoldBreathConsumption": 4,
-    "BaseRestorationRate": 4.4,
+    "BaseRestorationRate": 4.5,
     "Capacity": 100,
     "CrouchConsumption": {
         "x": 0.17,
-        "y": 1
+        "y": 0.7
     },
     "GrenadeHighThrow": 11,
     "GrenadeLowThrow": 8,
@@ -39,8 +39,8 @@
     },
     "HandsCapacity": 70,
     "HandsRestoration": 2.1,
-    "JumpConsumption": 16,
-    "OxygenCapacity": 300,
+    "JumpConsumption": 14,
+    "OxygenCapacity": 350,
     "OxygenRestoration": 4,
     "PoseLevelConsumptionPerNotch":  {
         "x": 1.1,
@@ -48,7 +48,7 @@
     },
     "ProneConsumption": 1,
     "SitToStandConsumption": 1,
-    "SprintDrainRate": 4.2,
+    "SprintDrainRate": 4,
     "StaminaExhaustionCausesJiggle": true,
     "StaminaExhaustionRocksCamera": false,
     "StaminaExhaustionStartsBreathSound": true,
